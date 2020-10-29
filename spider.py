@@ -60,7 +60,7 @@ def article_spider(url):
         "title:": news_title[0].text,
         "url:": url,
         "date:": date[0].text,
-        "content:": unicodedata.normalize('NFKC', content)
+        "content:": content
     }
     return data
 
@@ -69,8 +69,19 @@ def page_spider(url):
     res = requests.get(url)
     res.encoding = "utf8"
     soup = BeautifulSoup(res.text, 'html.parser')
-    return "".join([s for s in soup.text.splitlines(True) if s.strip()])
+    article_data = [s for s in article_spider(url).get('content:').splitlines(True) if s.strip()]
+    page_data = ''
+    for s in soup.text.splitlines(True):
+        if s.strip():
+            if s in article_data:
+                page_data += s.replace('\n', '') + '\tlabel:1\n'
+            else:
+                page_data += s.replace('\n', '') + '\tlabel:0\n'
+    return page_data
+    # return "".join([s for s in soup.text.splitlines(True) if s.strip()])
 
 
 if __name__ == "__main__":
-    print(page_spider('https://news.sina.com.cn/w/2020-10-27/doc-iiznctkc7848233.shtml'))
+    page_data = page_spider('https://news.sina.com.cn/w/2020-10-27/doc-iiznctkc7848233.shtml')
+    article_data = article_spider('https://news.sina.com.cn/w/2020-10-27/doc-iiznctkc7848233.shtml').get('content:')
+    print(page_data)
