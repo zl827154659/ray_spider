@@ -1,4 +1,5 @@
 import os
+import multiprocessing
 
 
 class FileWriter:
@@ -28,7 +29,8 @@ class FileWriter:
             f.write("url:" + data.get("url") + '\n')
             f.write("date:" + data.get("date") + '\n')
             f.write("content:\n" + data.get("content") + '\n')
-            print("has writen one page(url:%s) into file: %s" % (data.get('url'), tar_file))
+            print("%s has writen one page(url:%s) into file: %s" % (
+            multiprocessing.current_process(), data.get('url'), tar_file))
 
 
 def file_check(file_path):

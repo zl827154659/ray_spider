@@ -1,27 +1,30 @@
 import requests
 import re
 import os
-import threading
 import time
+import multiprocessing
 from queue import Queue
 from bs4 import BeautifulSoup
 from bloom_filter import ScalableBloomFilter
 from file_writer import FileWriter
 
-
 article_url = "https://news.sina.com.cn/s/2020-10-23/doc-iiznezxr7629012.shtml"
 initial_page = "http://news.sina.com.cn/china/"
 OUT_PUT_DIR = os.path.abspath(os.path.join('/home', "ray", "HHD", "SpiderData"))
 TAR_FILE_SIZE = 100 * 1024 * 1024
+TASK_NUM = 1
 
 
 class Spider:
     url_queue = Queue()
     bf = ScalableBloomFilter(initial_capacity=10000, error_rate=0.001)
-    lock = threading.Lock()
+    lock = multiprocessing.Lock()
+    task_num = TASK_NUM
+    file_writer = FileWriter(OUT_PUT_DIR, TAR_FILE_SIZE)
 
-    def __init__(self, init_url=None):
+    def __init__(self, init_url=None, task_num=TASK_NUM):
         self.url_queue.put(init_url)
+        self.task_num = task_num
 
     def scratch_links(self, current_url):
         res = requests.get(current_url)
@@ -33,23 +36,27 @@ class Spider:
         for link in all_links:
             use = re.findall(r'https?://news.sina.com.cn/.*/doc-iiznezxr.*', link)
             if use:
-                self.lock.acquire()
                 if use[0] not in self.bf:
                     self.bf.add(use[0])
                     self.url_queue.put(use[0])
-                self.lock.release()
+
+    def scratch(self):
+        url = self.url_queue.get()
+        # 爬取当前url
+        page_data = page_spider(url)
+        # save data into file
+        self.file_writer.write('a', page_data)
+        # 将当前页面的所有链接加入队列
+        self.scratch_links(url)
+        time.sleep(2)
 
     def run(self):
-        file_writer = FileWriter(OUT_PUT_DIR, TAR_FILE_SIZE)
-        while not self.url_queue.empty() or file_writer.count < 41:
-            url = self.url_queue.get()
-            # 爬取当前url
-            page_data = page_spider(url)
-            # save data into file
-            file_writer.write('a', page_data)
-            # 将当前页面的所有链接加入队列
-            self.scratch_links(url)
-            time.sleep(2)
+        pool = multiprocessing.Pool(processes=self.task_num)
+        while not self.url_queue.empty() or self.file_writer.count < 41:
+            pool.apply_async(self.scratch)
+        pool.close()
+        pool.join()
+        print("all children process has done")
 
 
 def article_spider(url):
@@ -100,6 +107,11 @@ def page_spider(url):
     # return "".join([s for s in soup.text.splitlines(True) if s.strip()])
 
 
+def test(i):
+    print("%s is doing %s" % (multiprocessing.current_process, i))
+    time.sleep(1)
+
+
 if __name__ == "__main__":
     # page_data = page_spider('https://news.sina.com.cn/w/2020-10-27/doc-iiznctkc7848233.shtml')
     # article_data = article_spider('https://news.sina.com.cn/w/2020-10-27/doc-iiznctkc7848233.shtml').get('content')
@@ -107,3 +119,4 @@ if __name__ == "__main__":
     # print(page_spider('https://news.sina.com.cn/w/2020-10-27/doc-iiznctkc7848233.shtml'))
     spider = Spider(initial_page)
     spider.run()
+
