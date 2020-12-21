@@ -7,7 +7,7 @@ import argparse
 from queue import Queue
 from bs4 import BeautifulSoup
 from bloom_filter import ScalableBloomFilter
-from file_operator import FileOperator
+from file_operator2 import FileOperator2
 
 article_url = "https://news.sina.com.cn/s/2020-10-23/doc-iiznezxr7629012.shtml"
 initial_page = "http://news.sina.com.cn"
@@ -21,7 +21,7 @@ class Spider2:
     bf = ScalableBloomFilter(initial_capacity=10000, error_rate=0.00001)
     lock = multiprocessing.Lock()
     task_num = TASK_NUM
-    file_operator = FileOperator(OUT_PUT_DIR, TAR_FILE_SIZE)
+    file_operator = FileOperator2(OUT_PUT_DIR, TAR_FILE_SIZE)
 
     def __init__(self, init_url=None, task_num=TASK_NUM):
         self.bf.add(init_url)
