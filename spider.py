@@ -11,14 +11,14 @@ from file_operator import FileOperator
 
 article_url = "https://news.sina.com.cn/s/2020-10-23/doc-iiznezxr7629012.shtml"
 initial_page = "http://news.sina.com.cn"
-OUT_PUT_DIR = os.path.abspath(os.path.join('/home', "ray", "HHD", "SpiderData"))
+OUT_PUT_DIR = os.path.abspath(os.path.join('/home', "ray", "HDD", "SpiderData"))
 TAR_FILE_SIZE = 100 * 1024 * 1024
 TASK_NUM = 1
 
 
 class Spider:
     url_queue = Queue()
-    bf = ScalableBloomFilter(initial_capacity=10000, error_rate=0.00001)
+    bf = ScalableBloomFilter(initial_capacity=100000000, error_rate=0.00001)
     lock = multiprocessing.Lock()
     task_num = TASK_NUM
     file_operator = FileOperator(OUT_PUT_DIR, TAR_FILE_SIZE)
@@ -82,6 +82,8 @@ class Spider:
                 elif re.findall(r'https?://match.*', use[0]):
                     continue
                 elif re.findall(r'https?://sports.sina.com.cn/star/.*', use[0]):
+                    continue
+                elif re.findall(r'https?://help.*', use[0]):
                     continue
                 if use[0] not in self.bf:
                     self.bf.add(use[0])
