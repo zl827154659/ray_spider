@@ -24,11 +24,10 @@ class FileOperator2:
             file_check(tar_file)
             data_size = os.path.getsize(tar_file)
         with open(tar_file, mode, encoding='utf8') as f:
-            f.write("title:" + data.get("title") + '\n')
             f.write("url:" + data.get("url") + '\n')
+            f.write("title:" + data.get("title") + '\n')
             f.write("date:" + data.get("date") + '\n')
-            f.write("page_content\n" + data.get("page_content") + "\n")
-            f.write("article_content:\n" + data.get("article_content") + '\n')
+            f.write("page_content:\n" + data.get("page_content") + "\n")
             print("%s has writen one page(url:%s) into file: %s" % (
                 multiprocessing.current_process(), data.get('url'), tar_file))
 
