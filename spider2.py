@@ -117,7 +117,11 @@ def page_spider(url, res):
     article_data = article_spider(url, res)
     if article_data is None:
         return None
-    page_content = soup.text.splitlines(True)
+    page_content = ''
+    for s in soup.text.splitlines(True):
+        if s.strip():
+            page_content += s
+    page_content += '\n'
     return {
         "title": article_data.get("title"),
         "url": article_data.get("url"),
